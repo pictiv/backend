@@ -7,6 +7,11 @@ import (
 	middlewares "pictiv-api/internal/middleware"
 )
 
+type status struct {
+	token interface{}
+	user  interface{}
+}
+
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
 	e.Use(middleware.Logger())
@@ -23,5 +28,10 @@ func (s *Server) statusHandler(c echo.Context) error {
 	if !s.db.Health() {
 		return echo.ErrInternalServerError
 	}
-	return c.NoContent(http.StatusOK)
+
+	resp := new(status)
+	resp.user = c.Get("user")
+	resp.token = c.Get("token")
+
+	return c.JSON(http.StatusOK, resp.user)
 }

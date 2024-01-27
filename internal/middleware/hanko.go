@@ -42,6 +42,9 @@ func SessionMiddleware() echo.MiddlewareFunc {
 			c.Set("token", cookie.Value)
 			c.Set("user", token.Subject())
 
+			//fmt.Println(reflect.TypeOf(cookie.Value))
+			//fmt.Println(reflect.TypeOf(token.Subject()))
+
 			return next(c)
 		}
 	}
