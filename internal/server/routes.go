@@ -1,10 +1,10 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"net/http"
+	middlewares "pictiv-api/internal/middleware"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -12,20 +12,16 @@ func (s *Server) RegisterRoutes() http.Handler {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.GET("/", s.HelloWorldHandler)
-	e.GET("/health", s.healthHandler)
+	e.GET("/", s.statusHandler)
+
+	e.GET("/protected", s.statusHandler, middlewares.SessionMiddleware())
 
 	return e
 }
 
-func (s *Server) HelloWorldHandler(c echo.Context) error {
-	resp := map[string]string{
-		"message": "Hello World",
+func (s *Server) statusHandler(c echo.Context) error {
+	if !s.db.Health() {
+		return echo.ErrInternalServerError
 	}
-
-	return c.JSON(http.StatusOK, resp)
-}
-
-func (s *Server) healthHandler(c echo.Context) error {
-	return c.JSON(http.StatusOK, s.db.Health())
+	return c.NoContent(http.StatusOK)
 }

@@ -6,10 +6,9 @@ import (
 )
 
 func main() {
+	srv := server.NewServer()
 
-	server := server.NewServer()
-
-	err := server.ListenAndServe()
+	err := srv.ListenAndServe()
 	if err != nil {
 		panic(fmt.Sprintf("cannot start server: %s", err))
 	}

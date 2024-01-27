@@ -24,3 +24,6 @@ tmp/
 
 # .env file
 .env
+
+# .DS_Store file
+.DS_Store

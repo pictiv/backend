@@ -2,22 +2,21 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	"os"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 type Service interface {
-	Health() map[string]string
+	Health() bool
 }
 
 type service struct {
-	db *sql.DB
+	db *pgxpool.Pool
 }
 
 var (
@@ -29,8 +28,8 @@ var (
 )
 
 func New() Service {
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
-	db, err := sql.Open("pgx", connStr)
+	dbConfig := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
+	db, err := pgxpool.New(context.Background(), dbConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,16 +37,14 @@ func New() Service {
 	return s
 }
 
-func (s *service) Health() map[string]string {
+func (s *service) Health() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	err := s.db.PingContext(ctx)
+	err := s.db.Ping(ctx)
 	if err != nil {
-		log.Fatalf(fmt.Sprintf("db down: %v", err))
+		return false
 	}
 
-	return map[string]string{
-		"message": "It's healthy",
-	}
+	return true
 }
