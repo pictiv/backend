@@ -9,40 +9,22 @@ purposes. See deployment for notes on how to deploy the project on a live system
 
 ## MakeFile
 
-run all make commands with clean tests
-
-```bash
-make all build
-```
-
 build the application
 
 ```bash
-make build
+task build
 ```
 
 run the application
 
 ```bash
-make run
-```
-
-Create DB container
-
-```bash
-make docker-run
-```
-
-Shutdown DB container
-
-```bash
-make docker-down
+task run
 ```
 
 live reload the application
 
 ```bash
-make watch
+make air
 ```
 
 run the test suite
