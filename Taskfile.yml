@@ -1,0 +1,26 @@
+version: 3
+
+tasks:
+  build:
+    cmds:
+      - go build -o main cmd/api/main.go
+
+  serve:
+    cmds:
+      - ./main serve
+
+  migrate:
+    cmds:
+      - ./main migrate
+
+  clean:
+    cmds:
+      - rm -rf main
+
+  test:
+    cmds:
+      - go test ./tests -v
+
+  air:
+    cmds:
+      - air
