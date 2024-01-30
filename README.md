@@ -24,17 +24,17 @@ task run
 live reload the application
 
 ```bash
-make air
+task air
 ```
 
 run the test suite
 
 ```bash
-make test
+task test
 ```
 
 clean up binary from the last build
 
 ```bash
-make clean
+task clean
 ```
