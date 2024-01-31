@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	"os"
@@ -16,7 +15,8 @@ import (
 type Service interface {
 	Health() bool
 	Migrate() bool
-	FindIllustrator(i model.IllustratorDTO) (model.IllustratorDTO, error)
+	FindManyIllustrators(i model.IllustratorDTO, page int) ([]*model.IllustratorDTO, error)
+	FindOneIllustrator(i model.IllustratorDTO) (model.IllustratorDTO, error)
 }
 
 type service struct {
@@ -118,20 +118,4 @@ ALTER TABLE "Queue"
 		return false
 	}
 	return true
-}
-
-func (s *service) FindIllustrator(i model.IllustratorDTO) (model.IllustratorDTO, error) {
-	rows, err := s.db.Query(context.Background(), `
-		SELECT id, name, "twitterId", "pixivId", "createdAt", "updatedAt" FROM "Illustrator" WHERE id=$1 OR name=$2 OR "pixivId"=$3 OR "twitterId"=$4 OR "createdAt"=$5 OR "updatedAt"=$6
-		
-	`, i.ID, i.Name, i.PixivID, i.TwitterID, i.CreatedAt, i.UpdatedAt)
-	defer rows.Close()
-	if err != nil {
-		return model.IllustratorDTO{}, err
-	}
-	var illustrator model.IllustratorDTO
-	if err = pgxscan.ScanOne(&illustrator, rows); err != nil {
-		return model.IllustratorDTO{}, err
-	}
-	return illustrator, nil
 }

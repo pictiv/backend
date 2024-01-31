@@ -5,17 +5,16 @@ import (
 	"time"
 )
 
-type IllustratorQuery struct {
+type IllustratorRead struct {
+	ID   int `query:"id"`
+	Page int `param:"page"`
+}
+
+type IllustratorSearch struct {
 	ID        int    `query:"id"`
 	Name      string `query:"name"`
 	PixivID   string `query:"pixivId"`
 	TwitterID string `query:"twitterId"`
-	CreatedAt string
-	UpdatedAt string
-}
-
-type IllustratorParam struct {
-	ID int `param:"id"`
 }
 
 type IllustratorDTO struct {
