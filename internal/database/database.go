@@ -3,9 +3,11 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	"os"
+	"pictiv-api/internal/model"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -14,6 +16,7 @@ import (
 type Service interface {
 	Health() bool
 	Migrate() bool
+	FindIllustrator(i model.IllustratorDTO) (model.IllustratorDTO, error)
 }
 
 type service struct {
@@ -52,66 +55,83 @@ func (s *service) Health() bool {
 
 func (s *service) Migrate() bool {
 	_, err := s.db.Exec(context.Background(), `
-	CREATE TYPE Status AS ENUM (
-		'WAITING',
-		'RUNNING',
-		'SUCCEEDED',
-		'FAILED'
-		);
-	
-	CREATE TABLE "Illustrator"
-	(
-		"id"        SERIAL PRIMARY KEY,
-		"name"      VARCHAR(255) UNIQUE NOT NULL,
-		"pixivId"   VARCHAR(255) UNIQUE NOT NULL,
-		"twitterId" VARCHAR(255) UNIQUE NOT NULL,
-		"createdAt" TIMESTAMP DEFAULT (now()),
-		"updatedAt" TIMESTAMP DEFAULT (now())
-	);
-	
-	CREATE TABLE "Illustration"
-	(
-		"id"            SERIAL PRIMARY KEY,
-		"title"         VARCHAR(255)        NOT NULL,
-		"source"        VARCHAR(255) UNIQUE NOT NULL,
-		"file"          VARCHAR(255)        NOT NULL,
-		"createdAt"     TIMESTAMP DEFAULT (now()),
-		"updatedAt"     TIMESTAMP DEFAULT (now()),
-		"userId"        UUID                NOT NULL,
-		"illustratorId" INT                 NOT NULL
-	);
-	
-	CREATE TABLE "Tag"
-	(
-		"id"             SERIAL PRIMARY KEY,
-		"name"           VARCHAR(255) UNIQUE NOT NULL,
-		"createdAt"      TIMESTAMP DEFAULT (now()),
-		"updatedAt"      TIMESTAMP DEFAULT (now()),
-		"illustrationId" INT                 NOT NULL
-	);
-	
-	CREATE TABLE "Queue"
-	(
-		"id"            SERIAL PRIMARY KEY,
-		"source"        VARCHAR(255) UNIQUE NOT NULL,
-		"status"        Status DEFAULT 'WAITING',
-		"issuerId"      UUID NOT NULL,
-		"createdAt"     TIMESTAMP DEFAULT (now()),
-		"updatedAt"     TIMESTAMP DEFAULT (now()),
-		"illustratorId" INT                 NOT NULL
-	);
-	
-	ALTER TABLE "Illustration"
-		ADD FOREIGN KEY ("illustratorId") REFERENCES "Illustrator" ("id");
-	
-	ALTER TABLE "Tag"
-		ADD FOREIGN KEY ("illustrationId") REFERENCES "Illustration" ("id");
-	
-	ALTER TABLE "Queue"
-		ADD FOREIGN KEY ("illustratorId") REFERENCES "Illustrator" ("id");
+CREATE TYPE Status AS ENUM (
+    'WAITING',
+    'RUNNING',
+    'SUCCEEDED',
+    'FAILED'
+    );
+
+CREATE TABLE "Illustrator"
+(
+    "id"        SERIAL PRIMARY KEY,
+    "name"      VARCHAR(255) UNIQUE NOT NULL,
+    "pixivId"   VARCHAR(255) UNIQUE NOT NULL,
+    "twitterId" VARCHAR(255) UNIQUE NOT NULL,
+    "createdAt" TIMESTAMPTZ DEFAULT (now()),
+    "updatedAt" TIMESTAMPTZ DEFAULT (now())
+);
+
+CREATE TABLE "Illustration"
+(
+    "id"            SERIAL PRIMARY KEY,
+    "title"         VARCHAR(255)        NOT NULL,
+    "source"        VARCHAR(255) UNIQUE NOT NULL,
+    "file"          VARCHAR(255)        NOT NULL,
+    "createdAt"     TIMESTAMPTZ DEFAULT (now()),
+    "updatedAt"     TIMESTAMPTZ DEFAULT (now()),
+    "userId"        UUID                NOT NULL,
+    "illustratorId" INT                 NOT NULL
+);
+
+CREATE TABLE "Tag"
+(
+    "id"             SERIAL PRIMARY KEY,
+    "name"           VARCHAR(255) UNIQUE NOT NULL,
+    "createdAt"      TIMESTAMPTZ DEFAULT (now()),
+    "updatedAt"      TIMESTAMPTZ DEFAULT (now()),
+    "illustrationId" INT                 NOT NULL
+);
+
+CREATE TABLE "Queue"
+(
+    "id"            SERIAL PRIMARY KEY,
+    "source"        VARCHAR(255) UNIQUE NOT NULL,
+    "status"        Status DEFAULT 'WAITING',
+    "issuerId"      UUID NOT NULL,
+    "createdAt"     TIMESTAMPTZ DEFAULT (now()),
+    "updatedAt"     TIMESTAMPTZ DEFAULT (now()),
+    "illustratorId" INT                 NOT NULL
+);
+
+ALTER TABLE "Illustration"
+    ADD FOREIGN KEY ("illustratorId") REFERENCES "Illustrator" ("id");
+
+ALTER TABLE "Tag"
+    ADD FOREIGN KEY ("illustrationId") REFERENCES "Illustration" ("id");
+
+ALTER TABLE "Queue"
+    ADD FOREIGN KEY ("illustratorId") REFERENCES "Illustrator" ("id");
+
 	`)
 	if err != nil {
 		return false
 	}
 	return true
+}
+
+func (s *service) FindIllustrator(i model.IllustratorDTO) (model.IllustratorDTO, error) {
+	rows, err := s.db.Query(context.Background(), `
+		SELECT id, name, "twitterId", "pixivId", "createdAt", "updatedAt" FROM "Illustrator" WHERE id=$1 OR name=$2 OR "pixivId"=$3 OR "twitterId"=$4 OR "createdAt"=$5 OR "updatedAt"=$6
+		
+	`, i.ID, i.Name, i.PixivID, i.TwitterID, i.CreatedAt, i.UpdatedAt)
+	defer rows.Close()
+	if err != nil {
+		return model.IllustratorDTO{}, err
+	}
+	var illustrator model.IllustratorDTO
+	if err = pgxscan.ScanOne(&illustrator, rows); err != nil {
+		return model.IllustratorDTO{}, err
+	}
+	return illustrator, nil
 }

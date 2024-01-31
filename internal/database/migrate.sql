@@ -11,8 +11,8 @@ CREATE TABLE "Illustrator"
     "name"      VARCHAR(255) UNIQUE NOT NULL,
     "pixivId"   VARCHAR(255) UNIQUE NOT NULL,
     "twitterId" VARCHAR(255) UNIQUE NOT NULL,
-    "createdAt" TIMESTAMP DEFAULT (now()),
-    "updatedAt" TIMESTAMP DEFAULT (now())
+    "createdAt" TIMESTAMPTZ DEFAULT (now()),
+    "updatedAt" TIMESTAMPTZ DEFAULT (now())
 );
 
 CREATE TABLE "Illustration"
@@ -21,8 +21,8 @@ CREATE TABLE "Illustration"
     "title"         VARCHAR(255)        NOT NULL,
     "source"        VARCHAR(255) UNIQUE NOT NULL,
     "file"          VARCHAR(255)        NOT NULL,
-    "createdAt"     TIMESTAMP DEFAULT (now()),
-    "updatedAt"     TIMESTAMP DEFAULT (now()),
+    "createdAt"     TIMESTAMPTZ DEFAULT (now()),
+    "updatedAt"     TIMESTAMPTZ DEFAULT (now()),
     "userId"        UUID                NOT NULL,
     "illustratorId" INT                 NOT NULL
 );
@@ -31,8 +31,8 @@ CREATE TABLE "Tag"
 (
     "id"             SERIAL PRIMARY KEY,
     "name"           VARCHAR(255) UNIQUE NOT NULL,
-    "createdAt"      TIMESTAMP DEFAULT (now()),
-    "updatedAt"      TIMESTAMP DEFAULT (now()),
+    "createdAt"      TIMESTAMPTZ DEFAULT (now()),
+    "updatedAt"      TIMESTAMPTZ DEFAULT (now()),
     "illustrationId" INT                 NOT NULL
 );
 
@@ -40,10 +40,10 @@ CREATE TABLE "Queue"
 (
     "id"            SERIAL PRIMARY KEY,
     "source"        VARCHAR(255) UNIQUE NOT NULL,
-    "status"        Status DEFAULT 'WAITING',
-    "issuerId"      UUID NOT NULL,
-    "createdAt"     TIMESTAMP DEFAULT (now()),
-    "updatedAt"     TIMESTAMP DEFAULT (now()),
+    "status"        Status      DEFAULT 'WAITING',
+    "issuerId"      UUID                NOT NULL,
+    "createdAt"     TIMESTAMPTZ DEFAULT (now()),
+    "updatedAt"     TIMESTAMPTZ DEFAULT (now()),
     "illustratorId" INT                 NOT NULL
 );
 

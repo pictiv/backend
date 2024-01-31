@@ -5,6 +5,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"net/http"
 	middlewares "pictiv-api/internal/middleware"
+	"pictiv-api/internal/model"
 )
 
 type status struct {
@@ -21,6 +22,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	e.GET("/protected", s.statusHandler, middlewares.SessionMiddleware())
 
+	e.GET("/illustrators", s.illustratorQueryHandler)
+
 	return e
 }
 
@@ -35,3 +38,43 @@ func (s *Server) statusHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, resp.user)
 }
+
+func (s *Server) protectedHandler(c echo.Context) error {
+	return c.JSON(http.StatusOK, "protected")
+}
+
+func (s *Server) illustratorQueryHandler(c echo.Context) error {
+	var i model.IllustratorQuery
+	var j model.IllustratorQuery
+	err := c.Bind(&i)
+	if err != nil || i == j {
+		return echo.ErrBadRequest
+	}
+	iDTO := model.IllustratorDTO{
+		ID:        i.ID,
+		Name:      i.Name,
+		PixivID:   i.PixivID,
+		TwitterID: i.TwitterID,
+	}
+	illustrator, err := s.db.FindIllustrator(iDTO)
+	if err != nil {
+		return echo.ErrInternalServerError
+	}
+
+	return c.JSON(http.StatusOK, illustrator)
+}
+
+//func (s *Server) illustratorParamHandler(c echo.Context) error {
+//	var i model.IllustratorParam
+//	var j model.IllustratorParam
+//	err := c.Bind(&i)
+//	if err != nil || i == j {
+//return echo.ErrBadRequest
+//	}
+//	illustrator := model.IllustratorDTO{
+//		ID:        i.ID,
+//		Name:      i.Name,
+//		PixivID:   i.PixivID,
+//		TwitterID: i.TwitterID,
+//	}
+//}
