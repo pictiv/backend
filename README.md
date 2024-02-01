@@ -1,6 +1,12 @@
-# pictiv/backend
+<p align="center">
+  <a href="http://pictiv.net/" target="blank"><img src="https://raw.githubusercontent.com/pictiv/.github/main/logo.svg" width="200" alt="Pictiv Logo" /></a>
+</p>
 
-One Paragraph of project description goes here
+  <p align="center">
+  The Pictiv Backend project includes APIs, database, and other core infrastructure items. <br /> It's built in Go using the echo framework.
+  </p>
+    <p align="center">
+</p>
 
 ## Getting Started
 
