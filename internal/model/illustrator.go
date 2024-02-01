@@ -6,8 +6,8 @@ import (
 )
 
 type IllustratorRead struct {
-	ID   int `query:"id"`
-	Page int `param:"page"`
+	ID   int `param:"id"`
+	Page int `query:"page"`
 }
 
 type IllustratorSearch struct {
@@ -27,10 +27,10 @@ type IllustratorDTO struct {
 }
 
 type IllustratorData struct {
-	ID        pgtype.Int4
-	Name      pgtype.Text
-	PixivID   pgtype.Text
-	TwitterID pgtype.Text
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
+	ID        pgtype.Int4        `db:"id"`
+	Name      pgtype.Text        `db:"name"`
+	PixivID   pgtype.Text        `db:"pixivId"`
+	TwitterID pgtype.Text        `db:"twitterId"`
+	CreatedAt pgtype.Timestamptz `db:"createdAt"`
+	UpdatedAt pgtype.Timestamptz `db:"updatedAt"`
 }

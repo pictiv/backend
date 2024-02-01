@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"pictiv-api/internal/model"
@@ -10,6 +11,7 @@ func (s *Server) handleGetIllustrator(c echo.Context) error {
 	var i model.IllustratorRead
 	var j model.IllustratorRead
 	err := c.Bind(&i)
+	fmt.Println(i.Page)
 	if err != nil {
 		return echo.ErrBadRequest
 	} else if i == j {
@@ -20,7 +22,7 @@ func (s *Server) handleGetIllustrator(c echo.Context) error {
 		}
 
 		return c.JSON(http.StatusOK, illustrators)
-	} else if i.Page != 0 {
+	} else if i.Page > 0 {
 		// Has Page so lookup page in Many
 		illustrators, err := s.db.FindManyIllustrators(model.IllustratorDTO{}, i.Page)
 		if err != nil {

@@ -4,12 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"log"
 	"net/http"
 	"os"
+	"pictiv-api/internal/database"
+	"pictiv-api/internal/model"
 )
 
 func SessionMiddleware() echo.MiddlewareFunc {
@@ -37,15 +41,29 @@ func SessionMiddleware() echo.MiddlewareFunc {
 				return echo.ErrUnauthorized
 			}
 
-			log.Printf("session for user '%s' verified successfully", token.Subject())
-
 			c.Set("token", cookie.Value)
-			c.Set("user", token.Subject())
+			//c.Set("user", token.Subject())
 
-			//fmt.Println(reflect.TypeOf(cookie.Value))
-			//fmt.Println(reflect.TypeOf(token.Subject()))
+			db := database.New()
+			defer db.Close()
 
-			return next(c)
+			i := model.UserDTO{ID: uuid.FromStringOrNil(token.Subject())}
+			user, err := db.FindOneUser(i)
+			if err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					err := db.CreateUser(i)
+					if err != nil {
+						return err
+					}
+					i.Role = "USER"
+					c.Set("user", i)
+					return next(c)
+				}
+				return err
+			} else {
+				c.Set("user", user)
+				return next(c)
+			}
 		}
 	}
 }

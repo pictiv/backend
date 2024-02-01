@@ -5,12 +5,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"net/http"
 	middlewares "pictiv-api/internal/middleware"
+	"pictiv-api/internal/model"
 )
-
-type status struct {
-	token interface{}
-	user  interface{}
-}
 
 func (s *Server) RegisterRoutes() http.Handler {
 	e := echo.New()
@@ -20,6 +16,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	e.GET("/", s.handleStatus)
 
 	e.GET("/protected", s.handleStatus, middlewares.SessionMiddleware())
+	e.GET("/admin", s.handleStatus, middlewares.SessionMiddleware())
 
 	illustrators := e.Group("/illustrators")
 	//illustrators.POST("/illustrators", )
@@ -37,13 +34,10 @@ func (s *Server) handleStatus(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	resp := new(status)
-	resp.user = c.Get("user")
-	resp.token = c.Get("token")
+	resp := model.Status{
+		Token: c.Get("token").(string),
+		User:  c.Get("user").(model.UserDTO),
+	}
 
-	return c.JSON(http.StatusOK, resp.user)
-}
-
-func (s *Server) handleProtected(c echo.Context) error {
-	return c.JSON(http.StatusOK, "protected")
+	return c.JSON(http.StatusOK, resp.User)
 }
