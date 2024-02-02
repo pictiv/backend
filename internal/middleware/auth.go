@@ -50,12 +50,13 @@ func SessionMiddleware() echo.MiddlewareFunc {
 			i := model.UserDTO{ID: uuid.FromStringOrNil(token.Subject())}
 			user, err := db.FindOneUser(i)
 			if err != nil {
+				fmt.Println(err)
 				if errors.Is(err, pgx.ErrNoRows) {
 					err := db.CreateUser(i)
 					if err != nil {
 						return err
 					}
-					i.Role = "USER"
+					i.Role = model.USER
 					c.Set("user", i)
 					return next(c)
 				}

@@ -14,7 +14,7 @@ const (
 )
 
 type UserDTO struct {
-	ID   uuid.UUID
-	Name zeronull.Text
-	Role string
+	ID   uuid.UUID     `db:"id"`
+	Name zeronull.Text `db:"name"`
+	Role Role          `db:"role"`
 }

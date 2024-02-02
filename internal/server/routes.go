@@ -39,5 +39,5 @@ func (s *Server) handleStatus(c echo.Context) error {
 		User:  c.Get("user").(model.UserDTO),
 	}
 
-	return c.JSON(http.StatusOK, resp.User)
+	return c.JSON(http.StatusOK, resp)
 }
