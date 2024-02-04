@@ -6,7 +6,6 @@ import (
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"log"
 	"os"
 	"pictiv-api/internal/model"
 	"time"
@@ -40,7 +39,7 @@ func New() Service {
 	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", username, password, host, port, database)
 	dbConfig, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	dbConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
 		pgxuuid.Register(conn.TypeMap())
@@ -48,7 +47,7 @@ func New() Service {
 	}
 	db, err := pgxpool.NewWithConfig(context.Background(), dbConfig)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	s := &service{db: db}
 	return s
@@ -73,69 +72,76 @@ func (s *service) Health() bool {
 func (s *service) Migrate() bool {
 	_, err := s.db.Exec(context.Background(), `
 		CREATE TYPE Status AS ENUM (
-			'WAITING',
-			'RUNNING',
-			'SUCCEEDED',
-			'FAILED'
-			);
-		
-		CREATE TABLE "illustrators"
-		(
-			"id"        SERIAL PRIMARY KEY,
-			"name"      VARCHAR(255) UNIQUE NOT NULL,
-			"pixivId"   VARCHAR(255) UNIQUE,
-			"twitterId" VARCHAR(255) UNIQUE,
-			"createdAt" TIMESTAMPTZ DEFAULT (now()),
-			"updatedAt" TIMESTAMPTZ DEFAULT (now())
-		);
-		
-		CREATE TABLE "illustrations"
-		(
-			"id"            SERIAL PRIMARY KEY,
-			"title"         VARCHAR(255)        NOT NULL,
-			"source"        VARCHAR(255) UNIQUE NOT NULL,
-			"file"          VARCHAR(255)        NOT NULL,
-			"createdAt"     TIMESTAMPTZ DEFAULT (now()),
-			"updatedAt"     TIMESTAMPTZ DEFAULT (now()),
-			"userId"        UUID                NOT NULL,
-			"illustratorId" INT                 NOT NULL
-		);
-		
-		CREATE TABLE "tags"
-		(
-			"id"             SERIAL PRIMARY KEY,
-			"name"           VARCHAR(255) UNIQUE NOT NULL,
-			"createdAt"      TIMESTAMPTZ DEFAULT (now()),
-			"updatedAt"      TIMESTAMPTZ DEFAULT (now()),
-			"illustrationId" INT                 NOT NULL
-		);
-		
-		CREATE TABLE "queue"
-		(
-			"id"            SERIAL PRIMARY KEY,
-			"source"        VARCHAR(255) UNIQUE NOT NULL,
-			"status"        Status      DEFAULT 'WAITING',
-			"issuerId"      UUID                NOT NULL,
-			"createdAt"     TIMESTAMPTZ DEFAULT (now()),
-			"updatedAt"     TIMESTAMPTZ DEFAULT (now()),
-			"illustratorId" INT                 NOT NULL
-		);
+    'WAITING',
+    'RUNNING',
+    'SUCCEEDED',
+    'FAILED'
+    );
 
-		CREATE TABLE "users"
-		(
-			"id"      UUID PRIMARY KEY,
-			"name"    VARCHAR(255) UNIQUE NOT NULL,
-			"isAdmin" BOOL DEFAULT FALSE
-		);
+CREATE TABLE "illustrators"
+(
+    "id"        SERIAL PRIMARY KEY,
+    "name"      VARCHAR(255) UNIQUE NOT NULL,
+    "pixiv_id"   VARCHAR(255) UNIQUE,
+    "twitter_id" VARCHAR(255) UNIQUE,
+    "created_at" TIMESTAMPTZ DEFAULT (now()),
+    "updated_at" TIMESTAMPTZ DEFAULT (now())
+);
 
-		ALTER TABLE illustrations
-			ADD FOREIGN KEY ("illustratorId") REFERENCES illustrators ("id");
-		
-		ALTER TABLE tags
-			ADD FOREIGN KEY ("illustrationId") REFERENCES illustrations ("id");
-		
-		ALTER TABLE queue
-			ADD FOREIGN KEY ("illustratorId") REFERENCES illustrators ("id");
+CREATE TABLE "illustrations"
+(
+    "id"            SERIAL PRIMARY KEY,
+    "title"         VARCHAR(255)        NOT NULL,
+    "source"        VARCHAR(255) UNIQUE NOT NULL,
+    "file"          VARCHAR(255)        NOT NULL,
+    "created_at"     TIMESTAMPTZ DEFAULT (now()),
+    "updated_at"     TIMESTAMPTZ DEFAULT (now()),
+    "userId"        UUID                NOT NULL,
+    "illustrator_id" INT                 NOT NULL
+);
+
+CREATE TABLE "tags"
+(
+    "id"             SERIAL PRIMARY KEY,
+    "name"           VARCHAR(255) UNIQUE NOT NULL,
+    "created_at"      TIMESTAMPTZ DEFAULT (now()),
+    "updated_at"      TIMESTAMPTZ DEFAULT (now()),
+    "illustration_id" INT                 NOT NULL
+);
+
+CREATE TABLE "queue"
+(
+    "id"            SERIAL PRIMARY KEY,
+    "source"        VARCHAR(255) UNIQUE NOT NULL,
+    "status"        Status      DEFAULT 'WAITING',
+    "issuer_id"      UUID                NOT NULL,
+    "created_at"     TIMESTAMPTZ DEFAULT (now()),
+    "updated_at"     TIMESTAMPTZ DEFAULT (now()),
+    "illustrator_id" INT                 NOT NULL
+);
+
+CREATE TYPE Role AS ENUM (
+    'ADMIN',
+    'MODERATOR',
+    'USER'
+    );
+
+CREATE TABLE "users"
+(
+    "id"   UUID PRIMARY KEY,
+    "name" VARCHAR(255) UNIQUE,
+    "rbac" Role DEFAULT 'USER'
+);
+
+
+ALTER TABLE illustrations
+    ADD FOREIGN KEY ("illustrator_id") REFERENCES illustrators ("id");
+
+ALTER TABLE tags
+    ADD FOREIGN KEY ("illustration_id") REFERENCES illustrations ("id");
+
+ALTER TABLE queue
+    ADD FOREIGN KEY ("illustrator_id") REFERENCES illustrators ("id");
 	`)
 	if err != nil {
 		return false

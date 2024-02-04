@@ -5,14 +5,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype/zeronull"
 )
 
-type Role string
-
-const (
-	ADMIN     Role = "ADMIN"
-	MODERATOR Role = "MODERATOR"
-	USER      Role = "USER"
-)
-
 type UserDTO struct {
 	ID   uuid.UUID     `db:"id"`
 	Name zeronull.Text `db:"name"`

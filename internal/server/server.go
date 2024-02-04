@@ -2,13 +2,12 @@ package server
 
 import (
 	"fmt"
+	_ "github.com/joho/godotenv/autoload"
+	"github.com/ory/graceful"
 	"net/http"
 	"os"
-	"strconv"
-	"time"
-
-	_ "github.com/joho/godotenv/autoload"
 	"pictiv-api/internal/database"
+	"strconv"
 )
 
 type Server struct {
@@ -18,20 +17,16 @@ type Server struct {
 
 func NewServer() *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	NewServer := &Server{
+	newServer := &Server{
 		port: port,
 		db:   database.New(),
 	}
 
 	// Declare Server config
-	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", NewServer.port),
-		Handler:      NewServer.RegisterRoutes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
-	}
+	server := graceful.WithDefaults(&http.Server{
+		Addr:    fmt.Sprintf("127.0.0.1:%d", newServer.port),
+		Handler: newServer.RegisterRoutes(),
+	})
 
-	fmt.Println("Server running on port", NewServer.port)
 	return server
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/ory/graceful"
+	"log"
 	"os"
 	"pictiv-api/internal/database"
 	"pictiv-api/internal/server"
@@ -14,18 +16,19 @@ func main() {
 		if os.Args[1] == "serve" {
 			srv := server.NewServer()
 
-			err := srv.ListenAndServe()
-			if err != nil {
-				panic(fmt.Sprintf("cannot start server: %s", err))
+			log.Println("main: Starting the server")
+			if err := graceful.Graceful(srv.ListenAndServe, srv.Shutdown); err != nil {
+				log.Fatalln("main: Failed to gracefully shutdown")
 			}
+			log.Println("main: Server was shutdown gracefully")
 		} else if os.Args[1] == "migrate" {
 			service := database.New()
 
 			if !service.Health() {
-				os.Exit(1)
+				panic("cannot connect to database")
 			} else {
-				if service.Migrate() {
-					os.Exit(1)
+				if !service.Migrate() {
+					panic("migration failed")
 				} else {
 					fmt.Println("migrated successfully")
 				}
